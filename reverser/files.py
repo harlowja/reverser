@@ -59,9 +59,36 @@ class ReverseFile(object):
         self._handle.close()
         self._closed = True
 
+    def read(self, size=None):
+        """Yields back segments of the given size."""
+        if size is None:
+            size = self._size
+        content = self._buffer()
+        if not content:
+            yield ''
+        else:
+            running = True
+            while running:
+                finished = False
+                while len(content) < size and not finished:
+                    tmp_content = self._buffer()
+                    if not tmp_content:
+                        finished = True
+                    else:
+                        content = tmp_content + content
+                if finished:
+                    yield content
+                    running = False
+                else:
+                    rest = content[0:-size]
+                    content = content[-size:]
+                    yield content
+                    content = rest
+
     def readlines(self,
                   include_newline=False, include_last_newline=True,
                   linesep=os.linesep):
+        """Yields back lines."""
         content = self._buffer()
         count = 0
         while True:
